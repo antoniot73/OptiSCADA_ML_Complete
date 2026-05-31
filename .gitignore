@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+.streamlit/secrets.toml
+test*.py
+models/*.joblib
+models/training_report.json

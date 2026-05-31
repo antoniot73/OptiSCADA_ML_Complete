@@ -1,0 +1,119 @@
+[
+  {
+    "id": "tab_optiscada",
+    "type": "tab",
+    "label": "OptiSCADA ML SCADA Virtual",
+    "disabled": false
+  },
+  {
+    "id": "inject_timer",
+    "type": "inject",
+    "z": "tab_optiscada",
+    "name": "Cada 5 segundos",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "5",
+    "once": true,
+    "onceDelay": "1",
+    "x": 150,
+    "y": 120,
+    "wires": [
+      [
+        "function_simulator"
+      ]
+    ]
+  },
+  {
+    "id": "function_simulator",
+    "type": "function",
+    "z": "tab_optiscada",
+    "name": "Simular tanque térmico",
+    "func": "let t = context.get('t') || 0;\nt += 1;\ncontext.set('t', t);\n\nlet temperature = 78 + 4*Math.sin(t/8) + (Math.random()-0.5)*1.6;\nlet pressure = 2.0 + 0.15*Math.sin(t/10) + (Math.random()-0.5)*0.1;\nlet flow = 45 + 3*Math.sin(t/6) + (Math.random()-0.5)*1.8;\nlet level = 65 + 5*Math.sin(t/12) + (Math.random()-0.5)*2.4;\nlet power = 70 + 6*Math.sin(t/9) + (Math.random()-0.5)*3;\nlet vibration = Math.max(0, 1.5 + 0.2*Math.sin(t/5) + (Math.random()-0.5)*0.3);\n\npower = Math.min(Math.max(power, 0), 100);\nlet energy = Math.max(0, 4.0 + 0.08*power + 0.03*temperature + 0.60*pressure - 0.015*flow);\nlet quality = 96 - Math.abs(temperature - 78)*0.75 - Math.abs(pressure - 2.0)*5.0 - Math.abs(flow - 45)*0.25 - Math.max(0, vibration - 2.0)*4.0;\nquality = Math.min(Math.max(quality, 0), 100);\n\nmsg.topic = 'factory/demo/tank01/telemetry';\nmsg.payload = {\n    asset_id: 'tank01',\n    timestamp: new Date().toISOString(),\n    temperature_c: Number(temperature.toFixed(2)),\n    pressure_bar: Number(pressure.toFixed(2)),\n    flow_lpm: Number(flow.toFixed(2)),\n    level_pct: Number(level.toFixed(2)),\n    heater_power_pct: Number(power.toFixed(2)),\n    vibration_mm_s: Number(vibration.toFixed(2)),\n    energy_kwh: Number(energy.toFixed(2)),\n    product_quality_pct: Number(quality.toFixed(2))\n};\nreturn msg;",
+    "outputs": 1,
+    "x": 400,
+    "y": 120,
+    "wires": [
+      [
+        "mqtt_out",
+        "debug_telemetry"
+      ]
+    ]
+  },
+  {
+    "id": "mqtt_out",
+    "type": "mqtt out",
+    "z": "tab_optiscada",
+    "name": "Publicar HiveMQ",
+    "topic": "",
+    "qos": "1",
+    "broker": "broker_hivemq",
+    "x": 650,
+    "y": 120,
+    "wires": []
+  },
+  {
+    "id": "debug_telemetry",
+    "type": "debug",
+    "z": "tab_optiscada",
+    "name": "telemetría",
+    "active": true,
+    "tosidebar": true,
+    "complete": "payload",
+    "targetType": "msg",
+    "x": 650,
+    "y": 180,
+    "wires": []
+  },
+  {
+    "id": "mqtt_in_recommendation",
+    "type": "mqtt in",
+    "z": "tab_optiscada",
+    "name": "Recomendación Streamlit",
+    "topic": "factory/demo/tank01/recommendation",
+    "qos": "1",
+    "datatype": "auto-detect",
+    "broker": "broker_hivemq",
+    "x": 180,
+    "y": 260,
+    "wires": [
+      [
+        "debug_recommendation"
+      ]
+    ]
+  },
+  {
+    "id": "debug_recommendation",
+    "type": "debug",
+    "z": "tab_optiscada",
+    "name": "recomendación recibida",
+    "active": true,
+    "tosidebar": true,
+    "complete": "payload",
+    "targetType": "msg",
+    "x": 450,
+    "y": 260,
+    "wires": []
+  },
+  {
+    "id": "broker_hivemq",
+    "type": "mqtt-broker",
+    "name": "HiveMQ Cloud",
+    "broker": "TU_HOST_HIVEMQ",
+    "port": "8883",
+    "tls": "tls_hivemq",
+    "clientid": "node-red-optiscada",
+    "usetls": true,
+    "protocolVersion": "4",
+    "keepalive": "60",
+    "cleansession": true
+  },
+  {
+    "id": "tls_hivemq",
+    "type": "tls-config",
+    "name": "TLS HiveMQ",
+    "verifyservercert": true
+  }
+]
