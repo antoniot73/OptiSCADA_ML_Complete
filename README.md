@@ -1,58 +1,296 @@
-# OptiSCADA-ML Complete
 
-Proyecto demo completo para Streamlit Community Cloud:
+# Industrial AI Prototype
 
-- SCADA virtual
-- MQTT Cloud con HiveMQ
-- Node-RED como simulador SCADA/PLC
-- HMI web
-- Machine Learning para calidad, energía y anomalías
-- Optimización de setpoints
-- Publicación de recomendaciones por MQTT
+## Descripción
 
-## Arquitectura
+Sistema web industrial estilo SCADA con:
+
+- Simulación de variables de proceso
+- Historian SQLite
+- Backend FastAPI
+- Dashboard Streamlit
+- Machine Learning supervisado
+- Arquitectura Industria 4.0
+
+---
+
+# Arquitectura General
 
 ```text
-Node-RED Cloud / local
-SCADA virtual
-        ↓ MQTT
-HiveMQ Cloud
-Broker MQTT
-        ↓ MQTT TLS
-Streamlit Community Cloud
-HMI + ML + Optimización + Alarmas
-        ↓ MQTT
-Node-RED recibe recomendaciones
+Simulador Industrial
+        ↓
+SQLite Historian
+        ↓
+FastAPI API
+        ↓
+RandomForest ML
+        ↓
+Dashboard Streamlit
+        ↓
+Render Cloud
 ```
 
-## Ejecutar localmente
+---
+
+# Variables industriales
+
+- Temperatura
+- Presión
+- Flujo
+- Vibración
+
+---
+
+# Machine Learning
+
+Modelo utilizado:
+
+```text
+RandomForestRegressor
+```
+
+Predicción:
+
+```text
+temperatura = f(presion, flujo, vibracion)
+```
+
+---
+
+# Estructura del proyecto
+
+```text
+industrial_ai_prototype/
+│
+├── app/
+│   ├── main.py
+│   ├── api.py
+│   ├── api_ml.py
+│   ├── database.py
+│   ├── models.py
+│   ├── schemas.py
+│   ├── simulator.py
+│   └── ml_model.py
+│
+├── dashboard/
+│   └── streamlit_app.py
+│
+├── data/
+│
+├── requirements.txt
+├── README.md
+└── .gitignore
+```
+
+---
+
+# Requisitos
+
+## Crear entorno virtual
+
+### Windows
+
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+### Linux/Mac
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+---
+
+# Instalar dependencias
 
 ```bash
 pip install -r requirements.txt
-python -m streamlit run app.py
 ```
 
-## Configuración MQTT
+---
 
-Copia `.streamlit/secrets.example.toml` como `.streamlit/secrets.toml` y coloca tus credenciales.
+# Ejecutar FastAPI
 
-## Node-RED
+```bash
+uvicorn app.main:app --reload
+```
 
-Importa:
+---
+
+# Ejecutar Dashboard Streamlit
+
+Abrir nueva terminal:
+
+```bash
+streamlit run dashboard/streamlit_app.py
+```
+
+---
+
+# URLs locales
+
+## FastAPI
 
 ```text
-node_red/optiscada_node_red_flow.json
+http://127.0.0.1:8000/docs
 ```
 
-Después configura el nodo de broker MQTT con tu host, usuario, contraseña y TLS.
+## Streamlit
 
-## Uso recomendado
+```text
+http://localhost:8501
+```
 
-1. Ejecuta en modo simulador interno.
-2. Entra a la pestaña Machine Learning.
-3. Entrena modelos con el dataset incluido.
-4. Prueba la optimización.
-5. Configura HiveMQ.
-6. Importa el flujo Node-RED.
-7. Cambia a MQTT Cloud.
-8. Publica recomendaciones y verifica que Node-RED las reciba.
+---
+
+# Endpoints principales
+
+- `/health`
+- `/current`
+- `/history`
+- `/predict`
+
+---
+
+# Variables simuladas
+
+El simulador genera:
+
+- presión
+- flujo
+- vibración
+- temperatura
+
+La temperatura depende matemáticamente de las otras variables para permitir aprendizaje supervisado realista.
+
+---
+
+# Dashboard Industrial
+
+El dashboard incluye:
+
+- KPIs industriales
+- Tendencias históricas
+- Gauges industriales
+- Tabla histórica
+- Predicción IA
+- Temperatura real vs predicha
+- Error MAE
+
+---
+
+# Machine Learning Supervisado
+
+Modelo:
+
+```text
+RandomForestRegressor
+```
+
+Variables de entrada:
+
+```text
+presion
+flujo
+vibracion
+```
+
+Variable objetivo:
+
+```text
+temperatura
+```
+
+Métrica utilizada:
+
+```text
+MAE (Mean Absolute Error)
+```
+
+---
+
+# Deploy Cloud
+
+## Tecnologías
+
+- GitHub
+- Render.com
+
+---
+
+# Deploy FastAPI
+
+## Build command
+
+```bash
+pip install -r requirements.txt
+```
+
+## Start command
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+---
+
+# Deploy Streamlit
+
+## Start command
+
+```bash
+streamlit run dashboard/streamlit_app.py --server.port $PORT
+```
+
+---
+
+# Tecnologías utilizadas
+
+- Python
+- FastAPI
+- Streamlit
+- Plotly
+- SQLite
+- SQLAlchemy
+- Scikit-learn
+- Pandas
+- Render
+- GitHub
+
+---
+
+# Capacidades actuales
+
+✔ Dashboard industrial  
+✔ Historian  
+✔ Tiempo real  
+✔ IA supervisada  
+✔ Predicción industrial  
+✔ Arquitectura cloud-ready  
+
+---
+
+# Próximas mejoras posibles
+
+- OPC UA real
+- MQTT
+- PostgreSQL
+- Docker
+- Alertas industriales
+- Detección de anomalías
+- Autenticación
+- Kubernetes
+
+---
+
+# Autor
+
+Proyecto prototipo Industria 4.0 orientado a integración:
+
+- SCADA-like
+- Historian
+- Machine Learning
+- Web Industrial Dashboard
