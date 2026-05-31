@@ -1,296 +1,378 @@
+## **OptiSCADA-ML Complete** 
 
-# Industrial AI Prototype
+## **Descripción** 
 
-## Descripción
+OptiSCADA-ML Complete es una plataforma demostrativa de Industria 4.0 desarrollada para integrar: 
 
-Sistema web industrial estilo SCADA con:
+- SCADA virtual 
 
-- Simulación de variables de proceso
-- Historian SQLite
-- Backend FastAPI
-- Dashboard Streamlit
-- Machine Learning supervisado
-- Arquitectura Industria 4.0
+- MQTT Cloud 
 
----
+- Machine Learning 
 
-# Arquitectura General
+- Optimización de procesos 
 
-```text
-Simulador Industrial
-        ↓
-SQLite Historian
-        ↓
-FastAPI API
-        ↓
-RandomForest ML
-        ↓
-Dashboard Streamlit
-        ↓
-Render Cloud
+- Streamlit Community Cloud 
+
+- Node-RED 
+
+- HiveMQ Cloud 
+
+El proyecto simula un proceso industrial de un tanque térmico y permite: 
+
+- Generar telemetría industrial. 
+
+- Publicar datos mediante MQTT. 
+
+- Visualizar variables de proceso en un HMI web. 
+
+- Entrenar modelos de Machine Learning. 
+
+- Detectar anomalías. 
+
+- Optimizar setpoints operativos. 
+
+- Publicar recomendaciones de operación. 
+
+## **Arquitectura** 
+
+**==> picture [152 x 271] intentionally omitted <==**
+
+**----- Start of picture text -----**<br>
+┌──────────────────────────┐<br>│ Node-RED                 │<br>│ SCADA Virtual            │<br>└────────────┬─────────────┘<br>             │ MQTT<br>             ▼<br>┌──────────────────────────┐<br>│ HiveMQ Cloud             │<br>│ Broker MQTT TLS          │<br>└────────────┬─────────────┘<br>             │ MQTT<br>             ▼<br>┌──────────────────────────┐<br>│ Streamlit                │<br>│ HMI + ML + Optimización  │<br>└────────────┬─────────────┘<br>             │ MQTT<br>             ▼<br>┌──────────────────────────┐<br>│ Node-RED                 │<br>**----- End of picture text -----**<br>
+
+
+1 
+
+```
+│ Recepción de            │
+│ recomendaciones          │
+└──────────────────────────┘
 ```
 
----
+## **Componentes** 
 
-# Variables industriales
+## **Streamlit** 
 
-- Temperatura
-- Presión
-- Flujo
-- Vibración
+Funcionalidades: 
 
----
+- HMI industrial 
 
-# Machine Learning
+- Tendencias 
 
-Modelo utilizado:
+- Alarmas 
 
-```text
-RandomForestRegressor
+- Entrenamiento ML 
+
+- Optimización 
+
+- Integración MQTT 
+
+Archivo principal: 
+
+```
+app.py
 ```
 
-Predicción:
+## **Node-RED** 
 
-```text
-temperatura = f(presion, flujo, vibracion)
+Node-RED actúa como: 
+
+```
+SCADA Virtual
 ```
 
----
+Genera telemetría simulada: 
 
-# Estructura del proyecto
+- temperatura • presión • flujo • nivel • potencia • vibración • energía • calidad 
 
-```text
-industrial_ai_prototype/
-│
-├── app/
-│   ├── main.py
-│   ├── api.py
-│   ├── api_ml.py
-│   ├── database.py
-│   ├── models.py
-│   ├── schemas.py
-│   ├── simulator.py
-│   └── ml_model.py
-│
-├── dashboard/
-│   └── streamlit_app.py
-│
-├── data/
-│
-├── requirements.txt
-├── README.md
-└── .gitignore
+Publica datos en: 
+
+```
+factory/demo/tank01/telemetry
 ```
 
----
+También recibe recomendaciones desde: 
 
-# Requisitos
+2 
 
-## Crear entorno virtual
-
-### Windows
-
-```bash
-python -m venv venv
-venv\Scripts\activate
+```
+factory/demo/tank01/recommendation
 ```
 
-### Linux/Mac
+## **HiveMQ Cloud** 
 
-```bash
-python3 -m venv venv
-source venv/bin/activate
+Broker MQTT utilizado: 
+
+```
+d7803de0bcd24ef0a342e4396a020c56.s1.eu.hivemq.cloud
 ```
 
----
+Puerto TLS: 
 
-# Instalar dependencias
-
-```bash
-pip install -r requirements.txt
+```
+8883
 ```
 
----
+## **Tópicos MQTT** 
 
-# Ejecutar FastAPI
+## **Telemetría** 
 
-```bash
-uvicorn app.main:app --reload
+```
+factory/demo/tank01/telemetry
 ```
 
----
+Publicador: 
 
-# Ejecutar Dashboard Streamlit
-
-Abrir nueva terminal:
-
-```bash
-streamlit run dashboard/streamlit_app.py
+```
+Node-RED
 ```
 
----
+Consumidor: 
 
-# URLs locales
-
-## FastAPI
-
-```text
-http://127.0.0.1:8000/docs
+```
+Streamlit
 ```
 
-## Streamlit
+## **Recomendaciones** 
 
-```text
+```
+factory/demo/tank01/recommendation
+```
+
+Publicador: 
+
+```
+Streamlit
+```
+
+Consumidor: 
+
+3 
+
+```
+Node-RED
+```
+
+## **Alarmas** 
+
+```
+factory/demo/tank01/alarm
+```
+
+Reservado para futuras versiones. 
+
+## **Instalación** 
+
+## **Crear entorno virtual** 
+
+```
+python-mvenv.venv
+.\.venv\Scripts\Activate.ps1
+```
+
+## **Instalar dependencias** 
+
+```
+pipinstall-rrequirements.txt
+```
+
+## **Configuración MQTT** 
+
+Crear: 
+
+```
+.streamlit/secrets.toml
+```
+
+Contenido: 
+
+```
+MQTT_HOST="d7803de0bcd24ef0a342e4396a020c56.s1.eu.hivemq.cloud"
+MQTT_PORT=8883
+```
+
+```
+MQTT_USERNAME="optiscada"
+MQTT_PASSWORD="********"
+MQTT_TOPIC_TELEMETRY="factory/demo/tank01/telemetry"
+MQTT_TOPIC_RECOMMENDATION="factory/demo/tank01/recommendation"
+MQTT_TOPIC_ALARM="factory/demo/tank01/alarm"
+```
+
+4 
+
+## **Ejecución** 
+
+## **Streamlit** 
+
+```
+python-mstreamlitrunapp.py
+```
+
+Acceso: 
+
+```
 http://localhost:8501
 ```
 
----
+## **Node-RED** 
 
-# Endpoints principales
-
-- `/health`
-- `/current`
-- `/history`
-- `/predict`
-
----
-
-# Variables simuladas
-
-El simulador genera:
-
-- presión
-- flujo
-- vibración
-- temperatura
-
-La temperatura depende matemáticamente de las otras variables para permitir aprendizaje supervisado realista.
-
----
-
-# Dashboard Industrial
-
-El dashboard incluye:
-
-- KPIs industriales
-- Tendencias históricas
-- Gauges industriales
-- Tabla histórica
-- Predicción IA
-- Temperatura real vs predicha
-- Error MAE
-
----
-
-# Machine Learning Supervisado
-
-Modelo:
-
-```text
-RandomForestRegressor
+```
+node-red
 ```
 
-Variables de entrada:
+Acceso: 
 
-```text
-presion
-flujo
-vibracion
+```
+http://localhost:1880
 ```
 
-Variable objetivo:
+## **Flujo Node-RED utilizado** 
 
-```text
-temperatura
+Configuración actual: 
+
+```
+inject
 ```
 
-Métrica utilizada:
-
-```text
-MAE (Mean Absolute Error)
+```
+   ↓
+function
+   ↓
+debug
+   ↓
+mqtt out
 ```
 
----
+El nodo function genera: 
 
-# Deploy Cloud
-
-## Tecnologías
-
-- GitHub
-- Render.com
-
----
-
-# Deploy FastAPI
-
-## Build command
-
-```bash
-pip install -r requirements.txt
+```
+{
 ```
 
-## Start command
-
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+"asset_id":"tank01",
+"temperature_c":78.5,
+"pressure_bar":2.1,
+"flow_lpm":45.2,
+"level_pct":65.0,
 ```
 
----
+5 
 
-# Deploy Streamlit
-
-## Start command
-
-```bash
-streamlit run dashboard/streamlit_app.py --server.port $PORT
+```
+"heater_power_pct":70.0,
+"vibration_mm_s":1.5,
+"energy_kwh":12.8,
+"product_quality_pct":93.5
+}
 ```
 
----
+## **Machine Learning** 
 
-# Tecnologías utilizadas
+Modelos incluidos: 
 
-- Python
-- FastAPI
-- Streamlit
-- Plotly
-- SQLite
-- SQLAlchemy
-- Scikit-learn
-- Pandas
-- Render
-- GitHub
+## **Calidad** 
 
----
+```
+quality_model.joblib
+```
 
-# Capacidades actuales
+Modelo: 
 
-✔ Dashboard industrial  
-✔ Historian  
-✔ Tiempo real  
-✔ IA supervisada  
-✔ Predicción industrial  
-✔ Arquitectura cloud-ready  
+```
+Random Forest Regressor
+```
 
----
+## **Energía** 
 
-# Próximas mejoras posibles
+```
+energy_model.joblib
+```
 
-- OPC UA real
-- MQTT
-- PostgreSQL
-- Docker
-- Alertas industriales
-- Detección de anomalías
-- Autenticación
-- Kubernetes
+Modelo: 
 
----
+```
+Random Forest Regressor
+```
 
-# Autor
+## **Anomalías** 
 
-Proyecto prototipo Industria 4.0 orientado a integración:
+```
+anomaly_model.joblib
+```
 
-- SCADA-like
-- Historian
-- Machine Learning
-- Web Industrial Dashboard
+Modelo: 
+
+```
+Isolation Forest
+```
+
+6 
+
+## **Optimización** 
+
+Variables optimizadas: 
+
+- temperatura • flujo • potencia 
+
+Objetivo: 
+
+```
+Maximizar calidad
+Minimizar energía
+Reducir riesgo
+```
+
+Salida: 
+
+```
+{
+"recommended_temperature_c":78,
+"recommended_flow_lpm":46,
+"recommended_heater_power_pct":68,
+"expected_saving_pct":8.4
+}
+```
+
+## **Estado actual** 
+
+## **Completado** 
+
+- SCADA virtual Node-RED 
+
+- HiveMQ Cloud 
+
+- MQTT TLS 
+
+- Simulación de proceso 
+
+- Dataset sintético 
+
+- Entrenamiento ML 
+
+- Optimización 
+
+- Publicación MQTT 
+
+- Recepción MQTT en Python 
+
+## **Pendiente** 
+
+- Corrección final de recepción MQTT dentro de Streamlit 
+
+- Publicación de recomendaciones desde Streamlit 
+
+- Despliegue en Streamlit Community Cloud 
+
+7 
+
+## **Autor** 
+
+Antonio Nicolás Toro González 
+
+Maestría en Inteligencia Artificial para la Transformación Digital 
+
+8 
+
