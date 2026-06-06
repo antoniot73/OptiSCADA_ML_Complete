@@ -17,6 +17,7 @@ import json
 import logging
 from typing import Any
 
+import requests
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -34,6 +35,56 @@ from src.utils import (
     initialize_session_state,
     parse_telemetry_payload,
 )
+
+NODE_RED_WAKE_URL = "https://processmind-scada-ml.onrender.com/"
+
+
+def wake_node_red_service(url: str = NODE_RED_WAKE_URL, timeout_seconds: int = 8) -> bool:
+    """
+    Despierta el servicio Node-RED desplegado en Render mediante una solicitud HTTP.
+
+    Args:
+        url: URL pública del servicio Node-RED.
+        timeout_seconds: Tiempo máximo de espera de la solicitud.
+
+    Returns:
+        True si Node-RED responde con código HTTP menor a 500; False en caso contrario.
+    """
+    try:
+        response = requests.get(url, timeout=timeout_seconds)
+        if response.status_code < 500:
+            logging.info("Node-RED activo. Código HTTP: %s", response.status_code)
+            return True
+
+        logging.warning("Node-RED respondió con error HTTP: %s", response.status_code)
+        return False
+
+    except requests.RequestException as exc:
+        logging.warning("Node-RED aún no respondió: %s", exc)
+        return False
+
+
+def render_node_red_wakeup_status() -> None:
+    """
+    Ejecuta una verificación ligera para despertar Node-RED en Render y muestra el estado.
+
+    Returns:
+        None.
+    """
+    if st.session_state.get("node_red_wakeup_checked", False):
+        return
+
+    with st.spinner("Despertando Node-RED en Render..."):
+        is_awake = wake_node_red_service()
+
+    st.session_state.node_red_wakeup_checked = True
+    st.session_state.node_red_is_awake = is_awake
+
+    if is_awake:
+        st.success("Node-RED está activo.")
+    else:
+        st.warning("Node-RED aún está iniciando. Si estaba dormido, puede tardar 30-60 segundos.")
+
 
 
 def render_header() -> None:
@@ -464,6 +515,7 @@ def main() -> None:
     configure_logging()
     initialize_session_state()
     render_header()
+    render_node_red_wakeup_status()
 
     settings = render_sidebar()
 
