@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from typing import Any
 
 import requests
@@ -37,6 +38,7 @@ from src.utils import (
 )
 
 NODE_RED_WAKE_URL = "https://processmind-scada-ml.onrender.com/"
+NODE_RED_HEALTH_URL = "https://processmind-scada-ml.onrender.com/healthz"
 
 
 def wake_node_red_service(url: str = NODE_RED_WAKE_URL, timeout_seconds: int = 8) -> bool:
@@ -53,37 +55,143 @@ def wake_node_red_service(url: str = NODE_RED_WAKE_URL, timeout_seconds: int = 8
     try:
         response = requests.get(url, timeout=timeout_seconds)
         if response.status_code < 500:
-            logging.info("Node-RED activo. Código HTTP: %s", response.status_code)
+            logging.info("Node-RED respondió al wake-up. Código HTTP: %s", response.status_code)
             return True
 
         logging.warning("Node-RED respondió con error HTTP: %s", response.status_code)
         return False
 
     except requests.RequestException as exc:
-        logging.warning("Node-RED aún no respondió: %s", exc)
+        logging.warning("Node-RED aún no respondió al wake-up: %s", exc)
         return False
 
 
-def render_node_red_wakeup_status() -> None:
+def check_node_red_health(
+    health_url: str = NODE_RED_HEALTH_URL,
+    timeout_seconds: int = 8,
+) -> tuple[bool, dict[str, Any]]:
     """
-    Ejecuta una verificación ligera para despertar Node-RED en Render y muestra el estado.
+    Consulta el endpoint /healthz de Node-RED para validar disponibilidad completa.
+
+    Args:
+        health_url: URL del endpoint de salud.
+        timeout_seconds: Tiempo máximo de espera por solicitud.
+
+    Returns:
+        Tupla con:
+        - True si Node-RED reporta status READY.
+        - Diccionario con la respuesta recibida o detalle del error.
+    """
+    try:
+        response = requests.get(health_url, timeout=timeout_seconds)
+
+        if response.status_code != 200:
+            return False, {
+                "status": "HTTP_ERROR",
+                "http_status": response.status_code,
+                "detail": response.text[:250],
+            }
+
+        data = response.json()
+        is_ready = data.get("status") == "READY"
+        return is_ready, data
+
+    except requests.RequestException as exc:
+        return False, {
+            "status": "WAITING",
+            "detail": str(exc),
+        }
+    except ValueError as exc:
+        return False, {
+            "status": "INVALID_HEALTH_RESPONSE",
+            "detail": str(exc),
+        }
+
+
+def wait_for_node_red_ready(
+    health_url: str = NODE_RED_HEALTH_URL,
+    max_wait_seconds: int = 75,
+    interval_seconds: int = 5,
+) -> tuple[bool, dict[str, Any]]:
+    """
+    Espera hasta que Node-RED indique READY desde /healthz.
+
+    Args:
+        health_url: URL del endpoint de salud.
+        max_wait_seconds: Tiempo máximo total de espera.
+        interval_seconds: Pausa entre intentos.
+
+    Returns:
+        Tupla con:
+        - True si Node-RED queda listo.
+        - Última respuesta de salud recibida.
+    """
+    start_time = time.time()
+    last_health: dict[str, Any] = {
+        "status": "STARTING",
+        "detail": "Esperando respuesta de Node-RED.",
+    }
+
+    while time.time() - start_time <= max_wait_seconds:
+        is_ready, health = check_node_red_health(health_url=health_url)
+        last_health = health
+
+        if is_ready:
+            logging.info("Node-RED READY: %s", health)
+            return True, health
+
+        logging.info("Node-RED aún no está READY: %s", health)
+        time.sleep(interval_seconds)
+
+    return False, last_health
+
+
+def render_node_red_readiness_status() -> None:
+    """
+    Despierta Node-RED y valida que el flujo esté completamente listo mediante /healthz.
 
     Returns:
         None.
     """
-    if st.session_state.get("node_red_wakeup_checked", False):
+    force_check = st.sidebar.button("Verificar Node-RED READY")
+
+    if st.session_state.get("node_red_ready_checked", False) and not force_check:
+        is_ready = st.session_state.get("node_red_is_ready", False)
+        health = st.session_state.get("node_red_health", {})
+
+        if is_ready:
+            st.success("Node-RED READY: SCADA virtual activo y telemetría inicial disponible.")
+        else:
+            st.warning("Node-RED aún no reporta READY. Usa 'Verificar Node-RED READY'.")
+            with st.expander("Detalle Node-RED"):
+                st.json(health)
         return
 
-    with st.spinner("Despertando Node-RED en Render..."):
-        is_awake = wake_node_red_service()
+    with st.spinner("Activando Node-RED y esperando estado READY..."):
+        wake_node_red_service()
+        is_ready, health = wait_for_node_red_ready()
 
-    st.session_state.node_red_wakeup_checked = True
-    st.session_state.node_red_is_awake = is_awake
+    st.session_state.node_red_ready_checked = True
+    st.session_state.node_red_is_ready = is_ready
+    st.session_state.node_red_health = health
 
-    if is_awake:
-        st.success("Node-RED está activo.")
+    if is_ready:
+        st.success("Node-RED READY: SCADA virtual activo y telemetría inicial disponible.")
     else:
-        st.warning("Node-RED aún está iniciando. Si estaba dormido, puede tardar 30-60 segundos.")
+        st.warning("Node-RED respondió, pero aún no terminó de publicar telemetría inicial.")
+        with st.expander("Detalle Node-RED"):
+            st.json(health)
+
+
+# Compatibilidad con versiones anteriores del app.py.
+def render_node_red_wakeup_status() -> None:
+    """
+    Mantiene compatibilidad con el nombre anterior de la función.
+
+    Returns:
+        None.
+    """
+    render_node_red_readiness_status()
 
 
 
