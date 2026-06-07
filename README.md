@@ -59,6 +59,7 @@ Responsable de:
 - Generación de telemetría
 - Publicación MQTT
 - Recepción de recomendaciones
+- Endpoint de disponibilidad `/healthz`
 
 ### HiveMQ Cloud
 
@@ -128,7 +129,47 @@ MQTT_PASSWORD
 
 ---
 
-## Arranque automático desde Streamlit
+## Verificación de disponibilidad de Node-RED
+
+Node-RED incluye un endpoint HTTP de verificación:
+
+```text
+https://processmind-scada-ml.onrender.com/healthz
+```
+
+Este endpoint permite distinguir entre:
+
+```text
+Render respondió
+```
+
+y:
+
+```text
+Node-RED está completamente listo para operar
+```
+
+La respuesta esperada contiene un estado tipo:
+
+```json
+{
+  "service": "processmind-scada-ml",
+  "status": "READY",
+  "node_red": "RUNNING",
+  "mqtt_flow": "ACTIVE"
+}
+```
+
+Esta validación se usa para confirmar que:
+
+- Node-RED arrancó correctamente.
+- El flujo principal está activo.
+- Existe telemetría reciente.
+- El servicio puede integrarse con Streamlit y MQTT.
+
+---
+
+## Arranque automático y validación READY desde Streamlit
 
 Cuando un usuario abre:
 
@@ -136,7 +177,13 @@ Cuando un usuario abre:
 https://optiscada-ml.streamlit.app/
 ```
 
-la aplicación ejecuta una solicitud HTTP para despertar automáticamente Node-RED en Render.
+la aplicación ejecuta una solicitud HTTP para despertar automáticamente Node-RED en Render y luego consulta:
+
+```text
+https://processmind-scada-ml.onrender.com/healthz
+```
+
+La mejora implementada en `app.py` permite que Streamlit espere el estado real de disponibilidad antes de asumir que el SCADA virtual está listo.
 
 Flujo:
 
@@ -145,18 +192,51 @@ Usuario abre Streamlit
         ↓
 Wake-up HTTP
         ↓
-Node-RED Render
+Consulta /healthz
+        ↓
+Node-RED READY
         ↓
 Conexión HiveMQ
         ↓
 Telemetría disponible
+        ↓
+Procesamiento ML
 ```
 
 Beneficios:
 
-- Sin intervención manual
-- Recuperación automática de servicios dormidos
-- Mejor experiencia de usuario
+- Sin intervención manual.
+- Recuperación automática de servicios dormidos.
+- Mejor experiencia de usuario.
+- Validación explícita de Node-RED antes de operar.
+- Menor probabilidad de estados iniciales `NOT_AVAILABLE` en Machine Learning.
+
+---
+
+## Funcionalidad actualizada en `app.py`
+
+La aplicación Streamlit incorpora una verificación de arranque para Node-RED mediante el endpoint `/healthz`.
+
+La lógica actual realiza:
+
+1. Activación del servicio Node-RED en Render.
+2. Espera controlada hasta recibir estado `READY`.
+3. Confirmación visual en Streamlit.
+4. Lectura MQTT posterior.
+5. Procesamiento de telemetría.
+6. Evaluación de alarmas y predicciones ML.
+
+Esto evita confundir una respuesta HTTP inicial de Render con una disponibilidad completa del flujo industrial.
+
+Estados esperados:
+
+```text
+Node-RED Render: ACTIVANDO
+Node-RED Render: READY
+MQTT: TELEMETRÍA RECIBIDA
+ML: PROCESADO
+Anomalía ML: NORMAL / ANOMALY / NOT_AVAILABLE
+```
 
 ---
 
@@ -247,6 +327,8 @@ Ejemplo:
 - Recepción MQTT en Streamlit
 - Recepción MQTT en Node-RED
 - Arranque automático desde Streamlit
+- Endpoint `/healthz` en Node-RED
+- Validación READY desde `app.py`
 
 ### Arquitectura validada end-to-end
 
@@ -261,3 +343,5 @@ Node-RED → HiveMQ → Streamlit → ML → HiveMQ → Node-RED
 Antonio Nicolás Toro González
 
 Maestría en Inteligencia Artificial para la Transformación Digital
+
+Instituto Internacional de Aguascalientes
